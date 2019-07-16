@@ -1,0 +1,73 @@
+<div data-collapse="medium" data-animation="default" data-duration="400" class="navbar w-nav">
+  <div class="container w-container"><a href="#" class="brand w-nav-brand"></a>
+    <nav role="navigation" class="w-nav-menu"><img src="assets/images/topmenu.png" width="682" srcset="assets/images/topmenu-p-500.png 500w, images/topmenu-p-800.png 800w, assets/images/topmenu-p-1080.png 1080w, assets/images/topmenu.png 1364w" sizes="(max-width: 991px) 100vw, 682px" alt=""></nav>
+    <div class="w-nav-button">
+      <div class="w-icon-nav-menu"></div>
+    </div>
+  </div>
+</div>
+<div class="content-wrapper">
+  <div class="left-menu-wrapper">
+    <a [routerLink]="[ '/home' ]" class="left-menu-item w-inline-block">
+      <div>Přehled</div>
+    </a>
+    <a [routerLink]="[ '/transactions' ]" class="left-menu-item w-inline-block w--current">
+      <div>Transakce</div>
+    </a>
+    <a href="#" class="left-menu-item w-inline-block">
+      <div>Spoření</div>
+    </a>
+    <a href="#" class="left-menu-item w-inline-block">
+      <div>Srovnávání</div>
+    </a>
+    <a href="#" class="left-menu-item w-inline-block">
+      <div>Reporty</div>
+    </a>
+    <a href="#" class="left-menu-item w-inline-block">
+      <div>Rozpočty</div>
+    </a>
+    <a href="#" class="left-menu-item w-inline-block">
+      <div>Nastavení</div>
+    </a>
+  </div>
+  <div class="right-content-wrapper">
+    <div class="content-wrapper-main">
+      <div class="header-wrapper w-clearfix">
+        <h1>Transakce</h1><img src="assets/images/MOJEINFO.png" width="219" alt="" class="image-2"></div>
+      <div class="payments-mofo-wrapper">
+        <div class="columns w-row">
+          <div class="column w-col w-col-6">
+            <div class="w-form">
+              <form [formGroup]="searchForm" (submit)="onSubmit()" id="email-form" name="email-form" data-name="Email Form" class="form-2">
+                <input [formControl]="searchForm.get('lookup')" type="text" class="text-field w-input" maxlength="256" name="lookup" data-name="lookup" placeholder="Vyhledat transakce" id="lookup" required="">
+              </form>
+            </div>
+          </div>
+          <div class="column-2 w-col w-col-6"></div>
+        </div>
+      </div>
+      <div class="tx-wrapper">
+        <div class="tx-item" *ngFor="let transaction of (transactions$ | async)">
+          <div class="tx-datediv">
+            <div class="text-block">{{ transaction.timestamp | date: 'mediumDate' }}</div>
+          </div>
+          <div class="tx-details">
+            <div class="tx-typ">Transakce platební kartou</div>
+            <div class="tx-note">{{ transaction.notes }}</div>
+            <ng-container *ngIf="transaction.type !== 'card_payment'">
+              <div class="vs">Variabilní: <span class="black">xxx</span></div>
+              <div class="vs">Specifický: <span class="black">yyy</span></div>
+              <div class="vs">Konstantní: <span class="black">zzz</span></div>
+            </ng-container>
+            <div class="vs">Částka: {{ transaction.amount_positive | number: '1.2-2' }} CZK, Datum: {{ transaction.timestamp | date: 'mediumDate' }}, Místo: {{ transaction.place }}<br>‍</div>
+          </div>
+          <div class="ty-amount">
+            <div class="amount">{{ transaction.amount | number: '1.2-2' }} CZK</div>
+            <div class="vs moneysleft">{{ transaction.balance | number: '1.2-2' }} CZK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -11,7 +11,11 @@
     <a [routerLink]="[ '/home' ]" class="left-menu-item w-inline-block">
       <div>Přehled</div>
     </a>
-    <a [routerLink]="[ '/transactions' ]" class="left-menu-item w-inline-block w--current">
+    <a
+      [routerLink]="[ '/transactions' ]"
+      [queryParams]="{ filter: 1 }"
+      queryParamsHandling="merge"
+      class="left-menu-item w-inline-block w--current">
       <div>Transakce</div>
     </a>
     <a href="#" class="left-menu-item w-inline-block">
@@ -36,10 +40,21 @@
         <h1>Transakce</h1><img src="assets/images/MOJEINFO.png" width="219" alt="" class="image-2"></div>
       <div class="payments-mofo-wrapper">
         <div class="columns w-row">
-          <div class="column w-col w-col-6">
-            <div class="w-form">
+          <div class="__form-wrap">
+            <div class="w-form __form">
               <form [formGroup]="searchForm" (submit)="onSubmit()" id="email-form" name="email-form" data-name="Email Form" class="form-2">
-                <input [formControl]="searchForm.get('lookup')" type="text" class="text-field w-input" maxlength="256" name="lookup" data-name="lookup" placeholder="Vyhledat transakce" id="lookup" required="">
+                <input [formControl]="searchForm.get('lookup')" type="text" class="text-field w-input __input" maxlength="256" name="lookup" data-name="lookup" placeholder="Vyhledat transakce" id="lookup" required="">
+                <select [formControl]="searchForm.get('time')" (change)="onSubmit()" id="field-2" name="field-2" data-name="Field 2" class="select-field w-select __select __select">
+
+                    <option value="0">V posledních 3 měsících</option>
+
+                    <option value="1">Tento měsíc</option>
+
+                    <option value="2">Za minulý měsíc</option>
+
+                    <option value="3">V posledních 6 měsících</option>
+
+                  </select>
               </form>
             </div>
           </div>

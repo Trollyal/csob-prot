@@ -11,7 +11,11 @@
     <a [routerLink]="[ '/home' ]" class="left-menu-item w-inline-block w--current">
       <div>Přehled</div>
     </a>
-    <a [routerLink]="[ '/transactions' ]" class="left-menu-item w-inline-block">
+    <a
+      [routerLink]="[ '/transactions' ]"
+      [queryParams]="{ filter: 1 }"
+      queryParamsHandling="merge"
+      class="left-menu-item w-inline-block">
       <div>Transakce</div>
     </a>
     <a href="#" class="left-menu-item w-inline-block">
@@ -57,8 +61,18 @@
       <div class="payments-mofo-wrapper overview filters">
         <div class="columns w-row">
           <div class="column w-col w-col-6">
-            <div class="w-form">
-              <form id="email-form" name="email-form" data-name="Email Form" class="form-2"><select id="field-2" name="field-2" data-name="Field 2" class="select-field w-select"><option value="">V posledních 3 měsících</option><option value="Second">Tento měsíc</option><option value="First">Za minulý měsíc</option><option value="Third">V posledních 6 měšsících</option></select></form>
+            <div class="w-form __form">
+              <select [formControl]="control" id="field-2" name="field-2" data-name="Field 2" class="select-field w-select __select">
+
+                <option value="0">V posledních 3 měsících</option>
+
+                <option value="1">Tento měsíc</option>
+
+                <option value="2">Za minulý měsíc</option>
+
+                <option value="3">V posledních 6 měsících</option>
+
+              </select>
               <div class="w-form-done">
                 <div>Thank you! Your submission has been received!</div>
               </div>
@@ -68,21 +82,63 @@
             </div>
           </div>
           <div class="column-2 w-clearfix w-col w-col-6">
-            <h1 class="totalamount">-392,142.82 CZK</h1>
+            <h1 class="totalamount">-{{ (graphData$ | async)?.total | number: '1.2-2' }} CZK</h1>
             <div class="text-block-2">Celkové výdaje</div>
           </div>
         </div>
       </div>
-      <div class="graf-wrapper"><img src="assets/images/grafy.png" srcset="assets/images/grafy.png 500w, assets/images/grafy.png 649w" sizes="(max-width: 649px) 100vw, 649px" alt=""></div>
+      <div class="__graph-wrap">
+      <!-- ACTUAL ANGULAR STARTS HERE -->
+
+        <div
+          class="__row"
+          *ngFor="let item of (graphData$ | async)?.items; let first = first"
+          [class.__first]="first">
+
+          <div class="__name">
+            {{ item.name }}
+          </div>
+
+          <div class="__graph">
+
+            <div
+              class="__graph-bar"
+              [style.width.%]="item.percentage * 2.25"
+              [style.background]="graphColorMap[item.name]">
+            </div>
+
+            <div class="__graph-text" [style.left.%]="item.percentage * 2.25">{{ item.amount | number: '1.2-2' }} CZK ({{ item.percentage | number: '1.2-2' }}%)</div>
+
+          </div>
+
+        </div>
+
+      <!-- ACTUAL ANGULAR ENDS HERE -->
+      </div>
       <div class="w-layout-grid grid-3">
-        <a id="w-node-4f203f0a40ec-c31b0983" href="#" class="categpry a w-inline-block">
-          <h1 class="vydaej">Nezařazené výdaje</h1>
+        <a
+          id="w-node-4f203f0a40ec-c31b0983"
+          [routerLink]="[ '/transactions' ]"
+          [queryParams]="{ lookup: 'cash', filter: 1 }"
+          queryParamsHandling="merge"
+          class="categpry a w-inline-block">
+          <h1 class="vydaej">Hotovostní výdaje</h1>
         </a>
-        <a id="w-node-fb10c53c17bc-c31b0983" href="#" class="categpry b w-inline-block">
-          <h1 class="vydaej">Výdaje za jídlo</h1>
+        <a
+          id="w-node-fb10c53c17bc-c31b0983"
+          [routerLink]="[ '/transactions' ]"
+          [queryParams]="{ lookup: 'groceries', filter: 1 }"
+          queryParamsHandling="merge"
+          class="categpry b w-inline-block">
+          <h1 class="vydaej">Výdaje za<br />jídlo</h1>
         </a>
-        <a id="w-node-a90d9f614b61-c31b0983" href="#" class="categpry w-inline-block">
-          <h1 class="vydaej">Výdaje za bydlení</h1>
+        <a
+          id="w-node-a90d9f614b61-c31b0983"
+          [routerLink]="[ '/transactions' ]"
+          [queryParams]="{ lookup: 'services', filter: 1 }"
+          queryParamsHandling="merge"
+          class="categpry w-inline-block">
+          <h1 class="vydaej">Výdaje za služby</h1>
         </a>
       </div>
     </div>

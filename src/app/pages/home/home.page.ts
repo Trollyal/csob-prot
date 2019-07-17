@@ -26,6 +26,11 @@ export class HomePageComponent {
     exchange: '#b32d8d'
   };
 
+  accounts = [
+    '23840283027',
+    '20912803823080'
+  ];
+
   transformMap = {
     0: (now: Date) => ({
       start: subMonths(now, 3),
@@ -51,6 +56,13 @@ export class HomePageComponent {
     startWith(0),
     switchMap((val) => this.elastic.getHistory$(this.transformMap[val](new Date())))
   );
+
+  balance1$ = this.elastic.getBalance$('23840283027');
+  balance2$ = this.elastic.getBalance$('4938430128301');
+
+  trackBy(data: any) {
+    return data.name;
+  }
 
   constructor(private elastic: ElasticService) {}
 }

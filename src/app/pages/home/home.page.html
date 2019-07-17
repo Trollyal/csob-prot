@@ -44,14 +44,14 @@
       <div class="accounts-wrapper w-clearfix">
         <div class="div-block w-clearfix">
           <div class="account">Účet</div>
-          <div class="text-block-3">188308794/0300</div>
-          <div class="text-block-3 moneyleft">0.00 CZK</div>
+          <div class="text-block-3">23840283027/0300</div>
+          <div class="text-block-3 moneyleft">{{ '1132945.50' | number: '1.2-2' }} CZK</div>
           <div class="text-block-2">Aktuální zůstatek</div>
         </div>
         <div class="div-block right w-clearfix">
           <div class="account">Účet</div>
-          <div class="text-block-3">188308795/0300</div>
-          <div class="text-block-3 moneyleft">200,000.00 CZK</div>
+          <div class="text-block-3">20912803823080/0300</div>
+          <div class="text-block-3 moneyleft">{{ 165598.50 | number: '1.2-2' }} CZK</div>
           <div class="text-block-2">Aktuální zůstatek</div>
         </div>
       </div>
@@ -92,7 +92,7 @@
 
         <div
           class="__row"
-          *ngFor="let item of (graphData$ | async)?.items; let first = first"
+          *ngFor="let item of (graphData$ | async)?.items; let first = first; trackBy: trackBy"
           [class.__first]="first">
 
           <div class="__name">

@@ -24,6 +24,6 @@ import { TransactionsPageComponent } from './pages/transactions/transactions.pag
     FormsModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [ AppComponent ]
 })
 export class AppModule { }

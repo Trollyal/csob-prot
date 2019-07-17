@@ -10,22 +10,26 @@ export class ElasticService {
 
   constructor(private http: HttpClient) {}
 
-
-   // bool: {
-  //   must: [
-  //     {
-  //       range: {
-  //         '@timestamp': {
-  //           gte: dates.start,
-  //           lte: dates.end
-  //         }
-  //       }
-  //     }
-  //   ]
-  // }
-
-
-  // ADD TIME RANGE TO REQUEST
+  getBalance$(account: string) {
+    return this.http.post(
+      '/api/txhistory/_search',
+      {
+        size: 1,
+        _source: 'balance',
+        sort : [
+          { '@timestamp' : 'desc' }
+          ],
+        query: {
+          term: {
+            account_number: account
+          }
+        }
+      }
+    ).pipe(
+      map((response: any) => response.hits.hits[0]._source.balance),
+      catchError((err) => of(throwError(err)))
+    );
+  }
 
   getTransactions$(dates: { start: Date, end: Date }, search?: string, limit = 15) {
     return this.http.post(
@@ -33,8 +37,22 @@ export class ElasticService {
       {
         size: limit,
         query: {
-          query_string: {
-            query: `*${search || ''}*`
+          bool: {
+            must: [
+              {
+                query_string: {
+                  query: `*${search || ''}*`
+                }
+              },
+              {
+                range: {
+                  '@timestamp': {
+                    gte: dates.start,
+                    lte: dates.end
+                  }
+                }
+              }
+            ]
           }
         }
       }
@@ -100,7 +118,7 @@ export class ElasticService {
           name: itm.key,
           amount: itm.sum_per_category.value,
           percentage: (itm.sum_per_category.value / total) * 100
-        }));
+        })).sort((a, b) => (a.name > b.name) ? 1 : -1);
 
         return { items, total };
       }),

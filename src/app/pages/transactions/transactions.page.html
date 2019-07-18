@@ -67,7 +67,7 @@
             <div class="text-block">{{ transaction.timestamp | date: 'mediumDate' }}</div>
           </div>
           <div class="tx-details">
-            <div class="tx-typ">Transakce platební kartou</div>
+            <div class="tx-typ __type">Transakce platební kartou  <span class="__badge">{{ transaction.category }}</span></div>
             <div class="tx-note">{{ transaction.notes }}</div>
             <ng-container *ngIf="transaction.type !== 'card_payment'">
               <div class="vs">Variabilní: <span class="black">xxx</span></div>

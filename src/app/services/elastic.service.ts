@@ -33,41 +33,50 @@ export class ElasticService {
 
   getTransactions$(dates: { start: Date, end: Date }, search?: string, limit = 15) {
 
-    const must = search
-      ? [
-        {
-          query_string: {
-            query: `*${search || ''}*`
-          }
-        },
-        {
-          range: {
-            '@timestamp': {
-              gte: dates.start,
-              lte: dates.end
+    const bool = search
+      ? {
+        should: [
+            {
+              query_string: {
+                query: `*${ search || '' }*`
+              }
+            },
+            {
+              query_string: {
+                query: `${ search || '' }`
+              }
+            }
+          ],
+        must: [
+          {
+            range: {
+              '@timestamp': {
+                gte: dates.start,
+                lte: dates.end
+              }
             }
           }
-        }
-      ]
-      : [
-        {
-          range: {
-            '@timestamp': {
-              gte: dates.start,
-              lte: dates.end
+        ]
+      }
+      : {
+        must: [
+          {
+            range: {
+              '@timestamp': {
+                gte: dates.start,
+                lte: dates.end
+              }
             }
           }
-        }
-      ];
+        ]
+      };
 
     return this.http.post(
       '/api/txhistory/_search',
       {
         size: limit,
         query: {
-          bool: {
-            must
-          }
+          bool
         }
       }
     ).pipe(

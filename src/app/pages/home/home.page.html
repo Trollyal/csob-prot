@@ -42,18 +42,18 @@
         <h1>Moje účty</h1>
       </div>
       <div class="accounts-wrapper w-clearfix">
-        <div class="div-block w-clearfix">
+        <div class="div-block w-clearfix __account" *ngFor="let account of (accounts$ | async); let odd = odd" [class.right]="!!odd">
           <div class="account">Účet</div>
-          <div class="text-block-3">23840283027/0300</div>
-          <div class="text-block-3 moneyleft">{{ '1132945.50' | number: '1.2-2' }} CZK</div>
+          <div class="text-block-3">{{ account.number }}/0300</div>
+          <div class="text-block-3 moneyleft">{{ (balances$ | async)[account.number] | number: '1.2-2' }} CZK</div>
           <div class="text-block-2">Aktuální zůstatek</div>
         </div>
-        <div class="div-block right w-clearfix">
+        <!-- <div class="div-block right w-clearfix">
           <div class="account">Účet</div>
           <div class="text-block-3">20912803823080/0300</div>
           <div class="text-block-3 moneyleft">{{ 165598.50 | number: '1.2-2' }} CZK</div>
           <div class="text-block-2">Aktuální zůstatek</div>
-        </div>
+        </div> -->
       </div>
       <div class="payments-mofo-wrapper overview transparent">
         <h1>Výdaje v kategorii</h1>
@@ -87,10 +87,20 @@
           </div>
         </div>
       </div>
-      <div class="__graph-wrap">
-      <!-- ACTUAL ANGULAR STARTS HERE -->
+      <div class="__graph-wrap" *ngIf="(graphData$ | async) as graphData">
 
-        <div
+        <canvas
+          baseChart
+          [chartType]="'pie'"
+          [datasets]="graphData.graph?.dataset"
+          [labels]="graphData.graph?.labels"
+          [options]="chartOptions"
+          [legend]="true"
+          [plugins]="chartPlugins"
+          (chartClick)="onChartClick($event)">
+        </canvas>
+
+        <!-- <div
           class="__row"
           *ngFor="let item of (graphData$ | async)?.items; let first = first; trackBy: trackBy"
           [class.__first]="first">
@@ -103,15 +113,15 @@
 
             <div
               class="__graph-bar"
-              [style.width.%]="item.percentage * 2.25"
+              [style.width.%]="(item.percentage * 2) < 1 ? 0.5 : (item.percentage * 2) > 50 ? 100 : (item.percentage * 2)"
               [style.background]="graphColorMap[item.name]">
             </div>
 
-            <div class="__graph-text" [style.left.%]="item.percentage * 2.25">{{ item.amount | number: '1.2-2' }} CZK ({{ item.percentage | number: '1.2-2' }}%)</div>
+            <div class="__graph-text" [style.left.%]="(item.percentage * 2) < 1 ? 0.5 : (item.percentage * 2) > 50 ? 100 : (item.percentage * 2)">{{ item.amount | number: '1.2-2' }} CZK ({{ item.percentage | number: '1.2-2' }}%)</div>
 
           </div>
 
-        </div>
+        </div> -->
 
       <!-- ACTUAL ANGULAR ENDS HERE -->
       </div>

@@ -69,11 +69,11 @@
           <div class="tx-details">
             <div class="tx-typ __type">Transakce platební kartou  <span class="__badge">{{ transaction.category }}</span></div>
             <div class="tx-note">{{ transaction.notes }}</div>
-            <ng-container *ngIf="transaction.type !== 'card_payment'">
+            <!-- <ng-container>
               <div class="vs">Variabilní: <span class="black">xxx</span></div>
               <div class="vs">Specifický: <span class="black">yyy</span></div>
               <div class="vs">Konstantní: <span class="black">zzz</span></div>
-            </ng-container>
+            </ng-container> -->
             <div class="vs">Částka: {{ transaction.amount_positive | number: '1.2-2' }} CZK, Datum: {{ transaction.timestamp | date: 'mediumDate' }}, Místo: {{ transaction.place }}<br>‍</div>
           </div>
           <div class="ty-amount">

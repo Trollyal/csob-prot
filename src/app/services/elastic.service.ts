@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import subHours from 'date-fns/esm/subHours';
+import endOfHour from 'date-fns/esm/endOfHour';
 
 @Injectable({
   providedIn: 'root'
@@ -12,21 +14,54 @@ export class ElasticService {
 
   getBalance$(account: string) {
     return this.http.post(
-      '/api/txhistory/_search',
+      '/api/transactions/_search',
       {
         size: 1,
         _source: 'balance',
-        sort : [
+        sort: [
           { '@timestamp' : 'desc' }
-          ],
+        ],
+        query: {
+          bool: {
+            must: [
+              {
+                term: {
+                  'account_number.keyword': account
+                }
+              },
+              {
+                range: {
+                  '@timestamp': {
+                    gte: subHours(new Date(), 1),
+                    lte: endOfHour(new Date())
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    );
+  }
+
+  getAccounts$() {
+    return this.http.post(
+      '/api/transactions/_search',
+      {
+        size: 0,
         query: {
           term: {
-            account_number: account
+            client_id: '3480321802982'
+          }
+        },
+        aggs: {
+          uniq_accounts: {
+            terms: { field: 'account_number.keyword' }
           }
         }
       }
     ).pipe(
-      map((response: any) => response.hits.hits[0]._source.balance),
+      map((response: any) => response.aggregations.uniq_accounts.buckets.map((account) => ({ number: account.key }))),
       catchError((err) => of(throwError(err)))
     );
   }
@@ -35,19 +70,28 @@ export class ElasticService {
 
     const bool = search
       ? {
-        should: [
-            {
-              query_string: {
-                query: `*${ search || '' }*`
-              }
-            },
-            {
-              query_string: {
-                query: `${ search || '' }`
-              }
-            }
-          ],
         must: [
+          {
+            term: {
+              client_id: '3480321802982'
+            }
+          },
+          {
+            bool: {
+              should: [
+                {
+                  query_string: {
+                    query: `*${ search || '' }*`
+                  }
+                },
+                {
+                  query_string: {
+                    query: `${ search || '' }`
+                  }
+                }
+              ]
+            }
+          },
           {
             range: {
               '@timestamp': {
@@ -61,6 +105,11 @@ export class ElasticService {
       : {
         must: [
           {
+            term: {
+              client_id: '3480321802982'
+            }
+          },
+          {
             range: {
               '@timestamp': {
                 gte: dates.start,
@@ -72,9 +121,16 @@ export class ElasticService {
       };
 
     return this.http.post(
-      '/api/txhistory/_search',
+      '/api/transactions/_search',
       {
         size: limit,
+        sort: [
+          {
+            '@timestamp': {
+              order: 'desc'
+            }
+          }
+        ],
         query: {
           bool
         }
@@ -94,7 +150,7 @@ export class ElasticService {
 
   getHistory$(dates: { start: Date, end: Date }) {
     return this.http.post(
-      '/api/txhistory/_search',
+      '/api/transactions/_search',
       {
         size: 0,
         query: {
@@ -102,7 +158,7 @@ export class ElasticService {
             must: [
               {
                 term: {
-                  account_number: '20912803823080'
+                  client_id: '3480321802982'
                 }
               },
               {
@@ -117,13 +173,12 @@ export class ElasticService {
           }
         },
         aggs: {
-          category: {
+          categories: {
             terms: {
-              field: 'category.keyword',
-              size: 10
+              field: 'category.keyword'
             },
             aggs: {
-              sum_per_category: {
+              sum_aggs: {
                 sum: {
                   field: 'amount_positive'
                 }
@@ -135,15 +190,55 @@ export class ElasticService {
     ).pipe(
       map((response: any) => {
 
-        const total = response.aggregations.category.buckets.reduce((sum, itm) => sum + itm.sum_per_category.value, 0);
+        const graphColorMap = {
+          shopping: '#bcc221',
+          transport: '#4d90fa',
+          groceries: '#189e78',
+          services: '#c657fa',
+          cash: '#49963f',
+          restaurants: '#946a26',
+          travel: '#e8c527',
+          health: '#e66e6e',
+          education: '#40b8b2',
+          exchange: '#b32d8d',
+          others: '#c2c2c2',
+          bank_fee: '#e37cd1',
+          insurance: '#c9aa90',
+          utility: '#2cc76e',
+          internet: '#e67aa1',
+          salary: '#47ab2d',
+          telco: '#2ab3ed',
+          entertainment: '#389cda'
+        };
 
-        const items = response.aggregations.category.buckets.map((itm) => ({
-          name: itm.key,
-          amount: itm.sum_per_category.value,
-          percentage: (itm.sum_per_category.value / total) * 100
-        })).sort((a, b) => (a.name > b.name) ? 1 : -1);
+        const labels: string[] = [ ];
 
-        return { items, total };
+        const dataset = {
+          data: [ ],
+          backgroundColor: [ ],
+          categories: [ ],
+          borderWidth: 0
+        };
+
+        const total = response.aggregations.categories.buckets.reduce((sum, itm) => sum + itm.sum_aggs.value, 0);
+
+        response.aggregations.categories.buckets
+          .sort((a, b) => (a.key > b.key) ? 1 : -1)
+          .forEach((itm) => {
+            labels.push(itm.key);
+            dataset.data.push(+((itm.sum_aggs.value / total) * 100).toFixed(1));
+            dataset.backgroundColor.push(graphColorMap[itm.key]);
+            dataset.categories.push(itm.key);
+          });
+
+        // FOR BAR GRAPH
+        // const items = response.aggregations.categories.buckets.map((itm) => ({
+        //   name: itm.key,
+        //   amount: itm.sum_aggs.value,
+        //   percentage: (itm.sum_aggs.value / total) * 100
+        // })).sort((a, b) => (a.name > b.name) ? 1 : -1);
+
+        return { graph: { dataset: [ dataset ], labels }, total };
       }),
       catchError((err) => of(throwError(err)))
     );

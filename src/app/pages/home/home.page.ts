@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ElasticService } from 'src/app/services/elastic.service';
 import { FormControl } from '@angular/forms';
-import { switchMap, startWith } from 'rxjs/operators';
+import { switchMap, startWith, map, catchError, tap } from 'rxjs/operators';
 import subMonths from 'date-fns/esm/subMonths';
 import startOfMonth from 'date-fns/esm/startOfMonth';
 import endOfMonth from 'date-fns/esm/endOfMonth';
+import { forkJoin, throwError, of } from 'rxjs';
+import * as pluginDataLabels from 'chartjs-plugin-datalabels';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -13,23 +16,56 @@ import endOfMonth from 'date-fns/esm/endOfMonth';
 })
 export class HomePageComponent {
 
-  graphColorMap = {
-    shopping: '#bcc221',
-    transport: '#4d90fa',
-    groceries: '#189e78',
-    services: '#c657fa',
-    cash: '#49963f',
-    restaurants: '#946a26',
-    travel: '#e8c527',
-    health: '#e66e6e',
-    education: '#40b8b2',
-    exchange: '#b32d8d'
+  chartOptions = {
+    layout: {
+      padding: {
+          left: 0,
+          right: 0,
+          top: 20,
+          bottom: 20
+      }
+    },
+    responsive: true,
+    legend: {
+      position: 'left',
+    },
+    plugins: {
+      datalabels: {
+        color: 'rgba(0, 0, 0, 0.6)',
+        font: {
+          size: 11
+        },
+        anchor: 'end',
+        align: 'end',
+        formatter: (value, ctx) => {
+          const label = `${ctx.dataset.data[ctx.dataIndex]}%`;
+          return label;
+        },
+      },
+    }
   };
 
-  accounts = [
-    '23840283027',
-    '20912803823080'
-  ];
+  chartPlugins = [ pluginDataLabels ];
+
+  accounts$ = this.elastic.getAccounts$();
+
+  balances$ = this.accounts$.pipe(
+    switchMap((accounts: any[]) => forkJoin(
+      accounts.map((account) => this.elastic
+        .getBalance$(account.number)
+        .pipe(
+          map((response) => ({ response, acc: account.number }))
+        )
+      )
+    )),
+    map((responses: any[]) => responses.reduce((obj, response) => {
+      return {
+        ...obj,
+        [response.acc]: response.response.hits.hits[0]._source.balance
+      };
+    }, {})),
+    startWith({})
+  );
 
   transformMap = {
     0: (now: Date) => ({
@@ -64,5 +100,22 @@ export class HomePageComponent {
     return data.name;
   }
 
-  constructor(private elastic: ElasticService) {}
+  constructor(
+    private elastic: ElasticService,
+    private _router: Router
+  ) {}
+
+  // http://localhost:4200/transactions?lookup=cash&filter=1
+
+  onChartClick(event) {
+    this._router.navigate(
+      [ '/transactions' ],
+      {
+        queryParams: {
+          lookup: event.active[0]['$datalabels']['$context'].dataset.categories[event.active[0]['$datalabels']['$context'].dataIndex],
+          filter: 1
+        }
+      }
+    );
+  }
 }

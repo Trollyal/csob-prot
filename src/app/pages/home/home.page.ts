@@ -25,9 +25,18 @@ export class HomePageComponent {
           bottom: 20
       }
     },
+    tooltips: {
+      callbacks: {
+        label: (tooltipItem, data) => `${data.labels[tooltipItem.index]}, ${data.datasets[0].data[tooltipItem.index]}%`
+      }
+    },
     responsive: true,
     legend: {
       position: 'left',
+      labels: {
+        fontSize: 14,
+        fontColor: 'rgba(0, 0, 0, 0.8)'
+      }
     },
     plugins: {
       datalabels: {

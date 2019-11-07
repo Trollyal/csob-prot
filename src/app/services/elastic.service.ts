@@ -40,6 +40,11 @@ export class ElasticService {
             ]
           }
         }
+      },
+      {
+        headers: {
+          'Authorization': 'Basic Y3NvYjppYmZ1bGx0ZXh0amVkZQ=='
+        }
       }
     );
   }
@@ -58,6 +63,11 @@ export class ElasticService {
           uniq_accounts: {
             terms: { field: 'account_number.keyword' }
           }
+        }
+      },
+      {
+        headers: {
+          'Authorization': 'Basic Y3NvYjppYmZ1bGx0ZXh0amVkZQ=='
         }
       }
     ).pipe(
@@ -134,6 +144,11 @@ export class ElasticService {
         query: {
           bool
         }
+      },
+      {
+        headers: {
+          'Authorization': 'Basic Y3NvYjppYmZ1bGx0ZXh0amVkZQ=='
+        }
       }
     ).pipe(
       map((response: any) => {
@@ -186,6 +201,11 @@ export class ElasticService {
             }
           }
         },
+      },
+      {
+        headers: {
+          'Authorization': 'Basic Y3NvYjppYmZ1bGx0ZXh0amVkZQ=='
+        }
       }
     ).pipe(
       map((response: any) => {

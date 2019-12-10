@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -25,7 +26,7 @@ import { ChartsModule } from 'ng2-charts';
     FormsModule,
     ChartsModule
   ],
-  providers: [],
+  providers: [ DecimalPipe ],
   bootstrap: [ AppComponent ]
 })
 export class AppModule { }

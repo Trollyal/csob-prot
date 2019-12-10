@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ElasticService } from 'src/app/services/elastic.service';
 import { FormControl } from '@angular/forms';
-import { switchMap, startWith, map, catchError, tap } from 'rxjs/operators';
+import { switchMap, startWith, map, catchError, tap, withLatestFrom } from 'rxjs/operators';
 import subMonths from 'date-fns/esm/subMonths';
 import startOfMonth from 'date-fns/esm/startOfMonth';
 import endOfMonth from 'date-fns/esm/endOfMonth';
-import { forkJoin, throwError, of } from 'rxjs';
+import { forkJoin, throwError, of, combineLatest } from 'rxjs';
 import * as pluginDataLabels from 'chartjs-plugin-datalabels';
 import { Router } from '@angular/router';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-home',
@@ -27,7 +28,7 @@ export class HomePageComponent {
     },
     tooltips: {
       callbacks: {
-        label: (tooltipItem, data) => `${data.labels[tooltipItem.index]}, ${data.datasets[0].data[tooltipItem.index]}%`
+        label: (tooltipItem, data) => `${data.labels[tooltipItem.index]}, ${this._number.transform(data.datasets[0].data[tooltipItem.index], '1.0-0')} CZK`
       }
     },
     responsive: true,
@@ -47,7 +48,9 @@ export class HomePageComponent {
         anchor: 'end',
         align: 'end',
         formatter: (value, ctx) => {
-          const label = `${ctx.dataset.data[ctx.dataIndex]}%`;
+          const label = ctx.dataset.data[ctx.dataIndex] > ctx.dataset.minLabel
+            ? `${this._number.transform(ctx.dataset.data[ctx.dataIndex], '1.0-0')} CZK`
+            : '';
           return label;
         },
       },
@@ -97,9 +100,11 @@ export class HomePageComponent {
 
   control = new FormControl(0);
 
-  graphData$ = this.control.valueChanges.pipe(
-    startWith(0),
-    switchMap((val) => this.elastic.getHistory$(this.transformMap[val](new Date())))
+  graphData$ = combineLatest(
+    this.control.valueChanges.pipe(startWith(0)),
+    this.accounts$
+  ).pipe(
+    switchMap(([ val, accounts ]) => this.elastic.getHistory$(this.transformMap[val](new Date()), accounts.map((acc) => acc.number)))
   );
 
   // balance1$ = this.elastic.getBalance$('23840283027');
@@ -111,7 +116,8 @@ export class HomePageComponent {
 
   constructor(
     private elastic: ElasticService,
-    private _router: Router
+    private _router: Router,
+    private _number: DecimalPipe
   ) {}
 
   // http://localhost:4200/transactions?lookup=cash&filter=1

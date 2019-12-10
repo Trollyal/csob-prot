@@ -163,45 +163,69 @@ export class ElasticService {
     );
   }
 
-  getHistory$(dates: { start: Date, end: Date }) {
-    return this.http.post(
-      '/api/transactions/_search',
-      {
-        size: 0,
-        query: {
-          bool: {
-            must: [
-              {
-                term: {
-                  client_id: '3480321802982'
-                }
-              },
-              {
-                range: {
-                  '@timestamp': {
-                    gte: dates.start,
-                    lte: dates.end
-                  }
-                }
-              }
-            ]
+  getHistory$(dates: { start: Date, end: Date }, accounts: string[] = [], minLabelPercentage = 4) {
+
+    const accountFilters = accounts.map((acc) => ({
+      bool: {
+        should: [
+          {
+            match_phrase: {
+              'account.number.keyword': acc
+            }
           }
-        },
+        ],
+        minimum_should_match: 1
+      }
+    }));
+
+    return this.http.post(
+      '/api/account-category-sum/_search',
+      {
+
         aggs: {
-          categories: {
-            terms: {
-              field: 'category.keyword'
+        categories: {
+          terms: {
+            field: 'category.keyword',
+            order: {
+              cat: 'desc'
             },
-            aggs: {
-              sum_aggs: {
-                sum: {
-                  field: 'amount_positive'
-                }
+            size: 50
+          },
+          aggs: {
+            cat: {
+              sum: {
+                field: 'amount_positive.sum'
               }
             }
           }
+        }
         },
-      },
+      query: {
+        bool: {
+          must: [],
+          filter: [
+            {
+              bool: {
+                should: [
+                  ...accountFilters
+                ],
+                minimum_should_match: 1
+              }
+            },
+            {
+              range: {
+                'counter_effective_date.timestamp': {
+                  gte: dates.start,
+                  lt: dates.end
+                }
+              }
+            }
+          ],
+          should: [],
+          must_not: []
+        }
+      }
+    },
       {
         headers: {
           'Authorization': 'Basic Y3NvYjppYmZ1bGx0ZXh0amVkZQ=='
@@ -233,22 +257,23 @@ export class ElasticService {
 
         const labels: string[] = [ ];
 
+        const total = response.aggregations.categories.buckets.reduce((sum, cat) => sum + cat.cat.value, 0);
+
         const dataset = {
           data: [ ],
           backgroundColor: [ ],
           categories: [ ],
-          borderWidth: 0
+          borderWidth: 0,
+          minLabel: total * (minLabelPercentage / 100)
         };
-
-        const total = response.aggregations.categories.buckets.reduce((sum, itm) => sum + itm.sum_aggs.value, 0);
 
         response.aggregations.categories.buckets
           .sort((a, b) => (a.key > b.key) ? 1 : -1)
-          .forEach((itm) => {
-            labels.push(itm.key);
-            dataset.data.push(+((itm.sum_aggs.value / total) * 100).toFixed(1));
-            dataset.backgroundColor.push(graphColorMap[itm.key]);
-            dataset.categories.push(itm.key);
+          .forEach((cat) => {
+            labels.push(cat.key);
+            dataset.data.push(+(cat.cat.value).toFixed(1));
+            dataset.backgroundColor.push(graphColorMap[cat.key]);
+            dataset.categories.push(cat.key);
           });
 
         // FOR BAR GRAPH
